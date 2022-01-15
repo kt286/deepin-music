@@ -62,6 +62,11 @@ void MediaMeta::getCoverData(const QString &tmpPath)
     MetaDetector::getCoverData(localPath, tmpPath, hash);
 }
 
+void MediaMeta::getLyricData(const QString &tmpPath)
+{
+    MetaDetector::getLyricData(localPath, tmpPath, hash);
+}
+
 //MediaMeta MediaMeta::fromLocalFile(const QFileInfo &fileInfo)
 //{
 //    MediaMeta meta;

@@ -43,6 +43,8 @@ public:
 
     static void getCoverData(const QString &path, const QString &tmpPath, const QString &hash);
     static QPixmap getCoverDataPixmap(MediaMeta meta);
+
+    static void getLyricData(const QString &path, const QString &tmpPath, const QString &hash);
     //static QVector<float> getMetaData(const QString &path);
 private:
     explicit MetaDetector();

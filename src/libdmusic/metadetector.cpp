@@ -47,7 +47,11 @@ extern "C" {
 #include <taglib/tag.h>
 #include <taglib/fileref.h>
 #include <taglib/taglib.h>
+#include <taglib/mpegfile.h>
+#include <taglib/id3v2tag.h>
+#include <taglib/id3v2frame.h>
 #include <taglib/tpropertymap.h>
+#include <taglib/unsynchronizedlyricsframe.h>
 
 #include <unicode/ucnv.h>
 
@@ -365,6 +369,7 @@ void MetaDetector::getCoverData(const QString &path, const QString &tmpPath, con
 //#endif // DISABLE_LIBAV
     return;
 }
+
 // 获取音乐封面图片原图
 QPixmap MetaDetector::getCoverDataPixmap(MediaMeta meta)
 {
@@ -394,6 +399,40 @@ QPixmap MetaDetector::getCoverDataPixmap(MediaMeta meta)
     format_free_context(pFormatCtx);
     pixmap = QPixmap::fromImage(image);
     return pixmap;
+}
+
+void MetaDetector::getLyricData(const QString &path, const QString &tmpPath, const QString &hash)
+{
+    QString lyricsDirPath = tmpPath + "/lyrics";
+    QString lyricName = hash + ".lrc";
+    QDir lyricsDir(lyricsDirPath);
+    if (!lyricsDir.exists()) {
+        bool isExists = lyricsDir.cdUp();
+        isExists &= lyricsDir.mkdir("lyrics");
+        isExists &= lyricsDir.cd("lyrics");
+    }
+
+    QByteArray byteArray;
+    if (!path.isEmpty() && !tmpPath.isEmpty() && !hash.isEmpty()) {
+        if (!lyricsDir.exists(lyricName)) {
+            QFile lyric(lyricsDirPath + "/" + lyricName);
+
+            TagLib::MPEG::File f1(path.toStdString().c_str());
+            TagLib::ID3v2::FrameList frames = f1.ID3v2Tag()->frameListMap()["USLT"];
+            if (!frames.isEmpty()) {
+                TagLib::ID3v2::UnsynchronizedLyricsFrame *frame = dynamic_cast<TagLib::ID3v2::UnsynchronizedLyricsFrame *>(frames.front());
+                if (frame) {
+                    if (lyric.open(QIODevice::WriteOnly)) {
+                        QString str = TStringToQString(frame->text());
+                        lyric.write(str.toUtf8());
+                    }
+                    lyric.close();
+                }
+            }   
+        }
+    }
+
+    return;
 }
 
 MetaDetector::MetaDetector()
