@@ -412,7 +412,6 @@ void MetaDetector::getLyricData(const QString &path, const QString &tmpPath, con
         isExists &= lyricsDir.cd("lyrics");
     }
 
-    QByteArray byteArray;
     if (!path.isEmpty() && !tmpPath.isEmpty() && !hash.isEmpty()) {
         if (!lyricsDir.exists(lyricName)) {
             QFile lyric(lyricsDirPath + "/" + lyricName);

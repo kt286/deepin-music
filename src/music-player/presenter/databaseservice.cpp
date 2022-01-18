@@ -1348,7 +1348,7 @@ DataBaseService::DataBaseService()
             &m_worker, SLOT(slotRemoveSelectedSongs(const QString &, const QStringList &, bool)));
     // 发送给子线程加载图片
     connect(this, &DataBaseService::signalCreatCoverImg, &m_worker, &DBOperate::slotCreatCoverImg);
-      // 发送给子线程加载图片
+    // 发送给子线程加载歌词
     connect(this, &DataBaseService::signalCreatLyric, &m_worker, &DBOperate::slotCreatLyric);
 
     // 单首歌曲完成解析
