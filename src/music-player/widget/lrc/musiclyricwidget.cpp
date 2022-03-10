@@ -66,13 +66,13 @@ MusicLyricWidget::MusicLyricWidget(QWidget *parent)
     setPalette(palette);
 
     m_cover = new Cover(this);
-    m_cover->setFixedSize(200, 200);
+    m_cover->setFixedSize(300, 300);
     m_cover->setObjectName("LyricCover");
 
     QHBoxLayout *layout = new QHBoxLayout(this);
 
     m_leftLayout = new QHBoxLayout;
-    m_leftLayout->setContentsMargins(120, 0, 140, 0);
+    m_leftLayout->setContentsMargins(80, 0, 80, 0);
     m_leftLayout->addWidget(m_cover, Qt::AlignLeft | Qt::AlignVCenter);
 
     m_lyricview = new LyricLabel(false, this);
@@ -87,7 +87,7 @@ MusicLyricWidget::MusicLyricWidget(QWidget *parent)
     m_nolyric->setForegroundRole(QPalette::WindowText);
 
 
-    layout->setContentsMargins(20, 20, 20, 150);
+    layout->setContentsMargins(20, 20, 20, 120);
     layout->addLayout(m_leftLayout, 0);
     layout->addWidget(m_lyricview, 10);
     layout->addWidget(m_nolyric, 10);

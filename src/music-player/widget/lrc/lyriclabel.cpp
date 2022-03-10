@@ -76,10 +76,11 @@ void LyricLabel::getFromFile(QString dir)
 void LyricLabel::paintItem(QPainter *painter, int index, const QRect &rect)
 {
     if (index == this->m_currentItem) {
-//        painter->setPen(lyricHighlight);
+        painter->setPen(lyricHighlight);
         QFont font(lyricFont);
         //绑定获取系统字体大小
         font.setPixelSize(DFontSizeManager::instance()->fontPixelSize(DFontSizeManager::T6));
+        font.setWeight(QFont::DemiBold);
         painter->setFont(font);
         QPoint leftpos = rect.bottomLeft();
         QPoint rightpos = rect.bottomRight();
@@ -106,15 +107,15 @@ void LyricLabel::paintItem(QPainter *painter, int index, const QRect &rect)
 
         painter->drawLine(leftpos.x() + 23, leftpos.y(), rightpos.x() - 23, rightpos.y());
         painter->restore();
+    } else {
+        QPen pen = painter->pen();
+        QColor color = pen.color();
+        color.setRed(lyricNormal.red());
+        color.setGreen(lyricNormal.green());
+        color.setBlue(lyricNormal.blue());
+        painter->setPen(color);
+        painter->setFont(lyricFont);
     }
-
-    QPen pen = painter->pen();
-    QColor color = pen.color();
-    color.setRed(lyricNormal.red());
-    color.setGreen(lyricNormal.green());
-    color.setBlue(lyricNormal.blue());
-    painter->setPen(index == this->m_currentItem ? lyricHighlight : color);
-    painter->setFont(lyricFont);
 
     QFontMetrics fm(lyricFont);
     QString lricstr = lyric.getLineAt(index);
@@ -167,9 +168,7 @@ void LyricLabel::setThemeType(int type)
 {
     m_themetype = type;
     if (type == 1) {
-        QColor normalcolor = "#000000";
-        normalcolor.setAlphaF(0.5);
-        lyricNormal =  normalcolor;
+        lyricNormal =  QColor("#333333");
         lyricHighlight =  QColor("#000000");
     } else {
         lyricNormal =  QColor("#C0C6D4");
