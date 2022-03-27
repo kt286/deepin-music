@@ -322,7 +322,7 @@ void MainFrame::initMenuAndShortcut()
 
     //初始化托盘
     auto playAction = new QAction(tr("Play/Pause"), this);
-    playAction->setEnabled(m_importWidget == nullptr);
+    playAction->setEnabled(DataBaseService::getInstance()->allMusicInfos().size() > 0);
     auto prevAction = new QAction(tr("Previous"), this);
     prevAction->setEnabled(false);
     auto nextAction = new QAction(tr("Next"), this);
@@ -1050,7 +1050,7 @@ void MainFrame::resizeEvent(QResizeEvent *e)
 
 void MainFrame::closeEvent(QCloseEvent *event)
 {
-    Player::getInstance()->setVolume(Player::getInstance()->getVolume());
+    MusicSettings::setOption("base.play.volume", Player::getInstance()->getVolume());
     //保存进度
     auto curPosition = Player::getInstance()->getActiveMeta().offset;
     //是否记录最后播放位置
