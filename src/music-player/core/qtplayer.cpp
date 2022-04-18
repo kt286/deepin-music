@@ -112,8 +112,12 @@ void QtPlayer::pause()
 
 void QtPlayer::stop()
 {
-    if (m_mediaPlayer != nullptr && m_mediaPlayer->state() == QMediaPlayer::PlayingState)
+    // 播放和状态状态都可以停止播放
+    if (m_mediaPlayer != nullptr && (m_mediaPlayer->state() == QMediaPlayer::State::PlayingState
+                                     || m_mediaPlayer->state() == QMediaPlayer::State::PausedState)) {
         m_mediaPlayer->stop();
+    }
+
 }
 
 int QtPlayer::length()
@@ -178,7 +182,8 @@ void QtPlayer::setMute(bool value)
 
 void QtPlayer::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
-    if (status == QMediaPlayer::MediaStatus::EndOfMedia) {
+    // 过滤无效音乐文件
+    if (status == QMediaPlayer::MediaStatus::EndOfMedia || status == QMediaPlayer::MediaStatus::InvalidMedia) {
         emit end();
     }
 }
