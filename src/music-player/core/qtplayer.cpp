@@ -25,6 +25,7 @@
 
 #include <QDBusObjectPath>
 #include <QDBusInterface>
+#include <QTimer>
 
 QtPlayer::QtPlayer(QObject *parent)
     : PlayerBase(parent)
@@ -117,7 +118,6 @@ void QtPlayer::stop()
                                      || m_mediaPlayer->state() == QMediaPlayer::State::PausedState)) {
         m_mediaPlayer->stop();
     }
-
 }
 
 int QtPlayer::length()
@@ -159,7 +159,8 @@ void QtPlayer::setMediaMeta(MediaMeta meta)
 bool QtPlayer::getMute()
 {
     init();
-    return m_mediaPlayer->isMuted();
+//    return m_mediaPlayer->isMuted();
+    return isDbusMuted();
 }
 
 void QtPlayer::setFadeInOutFactor(double fadeInOutFactor)
@@ -177,25 +178,63 @@ void QtPlayer::setVolume(int volume)
 void QtPlayer::setMute(bool value)
 {
     init();
-    m_mediaPlayer->setMuted(value);
+//    m_mediaPlayer->setMuted(value);
+    setDbusMute(value);
 }
 
 void QtPlayer::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
     // 过滤无效音乐文件
     if (status == QMediaPlayer::MediaStatus::EndOfMedia || status == QMediaPlayer::MediaStatus::InvalidMedia) {
-        emit end();
+        QTimer::singleShot(300, this, [ = ]() {
+            emit end();
+        });
     }
 }
 
 void QtPlayer::onPositionChanged(qint64 position)
 {
     init();
+    // 停止播放时，不设置进度
+    if (m_mediaPlayer->duration() <= 0 || m_mediaPlayer->state() != QMediaPlayer::State::PlayingState)
+        return;
     m_currPositionChanged = position;
     float value = static_cast<float>(position) / m_mediaPlayer->duration();
+//    qDebug() << "position" << position << "value" << value;
     emit timeChanged(position);
     emit positionChanged(value);
     resetPlayInfo();
+}
+
+bool QtPlayer::setDbusMute(bool value)
+{
+    readSinkInputPath();
+    if (!m_sinkInputPath.isEmpty()) {
+        QDBusInterface ainterface("com.deepin.daemon.Audio", m_sinkInputPath,
+                                  "com.deepin.daemon.Audio.SinkInput",
+                                  QDBusConnection::sessionBus());
+        if (!ainterface.isValid()) {
+            return false;
+        }
+        ainterface.call(QLatin1String("SetMute"), value);
+        return true;
+    }
+    return false;
+}
+
+bool QtPlayer::isDbusMuted()
+{
+    readSinkInputPath();
+    if (!m_sinkInputPath.isEmpty()) {
+        QVariant MuteV = DBusUtils::readDBusProperty("com.deepin.daemon.Audio", m_sinkInputPath,
+                                                     "com.deepin.daemon.Audio.SinkInput", "Mute");
+
+        if (!MuteV.isValid()) {
+            return false;
+        }
+        return MuteV.toBool();
+    }
+    return false;
 }
 
 void QtPlayer::resetPlayInfo()
