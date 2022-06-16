@@ -1006,6 +1006,11 @@ void Player::setEqualizerCurMode(int curIndex)
             //设置频率值
             m_basePlayer->setAmplificationForBandAt(m_basePlayer->amplificationForBandAt(uint(i)), uint(i));
         }
+    } else {
+        for (int i = 0 ; i < 10; i++) {
+            //设置频率值
+            m_basePlayer->setAmplificationForBandAt(uint(10), uint(i));
+        }
     }
 }
 
