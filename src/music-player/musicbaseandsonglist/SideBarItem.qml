@@ -311,13 +311,11 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
-        globalVariant.curListPageChanged.connect(function(){
-            if (globalVariant !== undefined && globalVariant.curListPage === "search") {
-                sideListView.currentItem.checked = false
-            }
-        })
-
-//        musicBaseScrollView.contentItem.contentYChanged.connect(dropArea.updateHoverIndex())
+//        globalVariant.curListPageChanged.connect(function(){
+//            if (globalVariant !== undefined && globalVariant.curListPage === "search") {
+//                sideListView.currentItem.checked = false
+//            }
+//        })
     }
 
 }
