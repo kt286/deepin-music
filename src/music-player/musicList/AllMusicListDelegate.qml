@@ -246,6 +246,7 @@ ItemDelegate{
                     elide: Text.ElideRight
                     text: title
                     anchors.verticalCenter: imagecell.verticalCenter
+                    verticalAlignment: Qt.AlignVCenter
                     palette.text: DTK.themeType === ApplicationHelper.DarkType ? "#B2F7F7F7" : "#000000"
                     color: checked ? palette.highlightedText :
                                      (imagecell.isCurPlay ? palette.highlight : palette.text)

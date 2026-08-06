@@ -50,12 +50,12 @@ Rectangle {
         anchors.left: musicSublistTitle.left; anchors.leftMargin: 20
         width: musicSublistTitle.width - 40; height: 36
         Rectangle {
-            width: 26; height: 36
+            width: 56; height: 36
             color: "transparent"
         }
         Label {
-            width: headerView.width - 368; height: 36
-            leftPadding: 10
+            width: headerView.width - 342 - 56; height: 36
+            leftPadding: 6
             text: qsTr("Title")
             verticalAlignment: Qt.AlignVCenter
         }
