@@ -120,10 +120,8 @@ Rectangle {
 
             onHoveredChanged: {
                 if (hovered) {
-                    if (defaultY < 0) {
-                        var p = artistColumn.mapToItem(rootrectangle.parent, artistColumn.x, artistColumn.y)
-                        defaultY = p.y
-                    }
+                    var p = artistColumn.mapToItem(rootrectangle.parent, artistColumn.x, artistColumn.y)
+                    defaultY = p.y
                     artistHoverItemAnimator.start()
                 } else {
                     artistExitItemAnimator.start()
