@@ -338,15 +338,15 @@ TitleBar {
                 id: searchResultComponent
                 SearchResultDialog {
                     width: 360
-                    x: searchEdit.x - (width - searchEdit.width) / 2
+                    parent: titleBar
+                    x: searchEdit.mapToItem(titleBar, 0, 0).x - (width - searchEdit.width) / 2
                     y: 50
 
                     visible: false
-                    function onSearchItemTriggered(value, type) {
+                    onSearchItemTriggered: function(value, type) {
                         titleBar.searchItemTriggered(value, type)
                         searchEdit.text = value
                         visible = false
-                        //searchEdit.updateSearchText(value)
                     }
                 }
             }

@@ -14,7 +14,6 @@ Popup {
     property int itemHeight: 40
 
     signal searchItemTriggered(string value, int type)
-    signal requestClose()
 
     id: searchResultRect
     width: 360
@@ -95,7 +94,7 @@ Popup {
                 }
                 onClicked: {
                     searchItemTriggered(songList[index], 0)
-                    requestClose()
+                    close()
                 }
             }
         }
@@ -148,7 +147,7 @@ Popup {
                         type = 2
 
                     searchItemTriggered(model.name, type)
-                    requestClose()
+                    close()
                 }
             }
         }
