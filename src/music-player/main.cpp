@@ -62,6 +62,7 @@ void sig_term_handler(int signum, siginfo_t *info, void *ptr)
 {
     qDebug() << "SIGTERM received.";
     presenter->saveDataToDB();
+    qInstallMessageHandler(nullptr);
     exit(1);
 }
 #endif
@@ -91,18 +92,6 @@ int main(int argc, char *argv[])
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
     QString appDir = QFileInfo(QString::fromWCharArray(exePath)).absolutePath();
-    if (qgetenv("QT_PLUGIN_PATH").isEmpty()) {
-        qputenv("QT_PLUGIN_PATH", (appDir + "/plugins").toUtf8());
-    }
-    if (qgetenv("QT_QPA_PLATFORM_PLUGIN_PATH").isEmpty()) {
-        qputenv("QT_QPA_PLATFORM_PLUGIN_PATH", (appDir + "/plugins/platforms").toUtf8());
-    }
-    if (qgetenv("QML2_IMPORT_PATH").isEmpty()) {
-        qputenv("QML2_IMPORT_PATH", (appDir + "/qml").toUtf8());
-    }
-    if (qgetenv("QT_QML_IMPORT_PATH").isEmpty()) {
-        qputenv("QT_QML_IMPORT_PATH", (appDir + "/qml").toUtf8());
-    }
     if (qgetenv("DSG_DATA_DIRS").isEmpty()) {
         qputenv("DSG_DATA_DIRS", (appDir + "/dsg").toUtf8());
     }
@@ -312,5 +301,7 @@ int main(int argc, char *argv[])
     sigaction(SIGTERM, &_sigact, NULL);
 #endif
 
-    return app->exec();
+    int ret = app->exec();
+    qInstallMessageHandler(nullptr);
+    return ret;
 }

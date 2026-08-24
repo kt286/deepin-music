@@ -315,9 +315,8 @@ void Presenter::forceExit()
     qCInfo(dmMusic) << "Force exit requested";
     saveDataToDB();
     qApp->processEvents();
+    qInstallMessageHandler(nullptr);
     QCoreApplication::exit(0);
-    qCDebug(dmMusic) << "Forcing immediate exit";
-    _Exit(0);
 }
 
 QVariantList Presenter::getLyrics()
