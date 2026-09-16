@@ -41,20 +41,20 @@ QString LyricDownloader::downloadAndSaveLyrics(const DMusic::MediaMeta &meta,
         return QString();
     }
 
-    // Try sources in order: NetEase -> Kugou -> LRCLIB
+    // Try sources in order: Kugou -> NetEase -> LRCLIB (Kugou has better word-by-word lyrics)
     QString lyricsText;
 
-    qCInfo(dmMusic) << "Trying NetEase for:" << meta.title;
-    lyricsText = fetchFromNetEase(meta);
+    qCInfo(dmMusic) << "Trying Kugou for:" << meta.title;
+    lyricsText = fetchFromKugou(meta);
     if (!lyricsText.isEmpty()) {
-        qCInfo(dmMusic) << "Got lyrics from NetEase, size:" << lyricsText.size();
+        qCInfo(dmMusic) << "Got lyrics from Kugou, size:" << lyricsText.size();
     }
 
     if (lyricsText.isEmpty()) {
-        qCInfo(dmMusic) << "Trying Kugou for:" << meta.title;
-        lyricsText = fetchFromKugou(meta);
+        qCInfo(dmMusic) << "Trying NetEase for:" << meta.title;
+        lyricsText = fetchFromNetEase(meta);
         if (!lyricsText.isEmpty()) {
-            qCInfo(dmMusic) << "Got lyrics from Kugou";
+            qCInfo(dmMusic) << "Got lyrics from NetEase, size:" << lyricsText.size();
         }
     }
 
@@ -245,6 +245,24 @@ QList<LyricSearchResult> LyricDownloader::searchLyrics(const QString &keyword)
 {
     QList<LyricSearchResult> results;
 
+    // Search Kugou first (has better word-by-word lyrics)
+    try {
+        QList<KgsearchResult> kgResults = m_kgApi->searchSongs(keyword);
+        for (const auto &r : kgResults) {
+            LyricSearchResult item;
+            item.title = r.title;
+            item.artist = r.artist;
+            item.album = r.album;
+            item.source = "Kugou";
+            item.id = r.id;
+            item.duration = r.duration;
+            item.kugouHash = r.hash;
+            results.append(item);
+        }
+    } catch (...) {
+        qCWarning(dmMusic) << "Kugou search exception";
+    }
+
     // Search NetEase
     try {
         QList<NesearchResult> neResults = m_neApi->searchSongs(keyword);
@@ -328,4 +346,21 @@ QString LyricDownloader::getLyricsFromLrclib(const LyricSearchResult &result)
         lyricsText = lyricObj.value("plainLyrics").toString();
 
     return lyricsText;
+}
+
+QString LyricDownloader::getLyricsFromKugou(const LyricSearchResult &result)
+{
+    try {
+        KgsearchResult kgResult;
+        kgResult.hash = result.kugouHash;
+        kgResult.id = result.id;
+        kgResult.title = result.title;
+        kgResult.artist = result.artist;
+        kgResult.album = result.album;
+        kgResult.duration = result.duration;
+        return m_kgApi->getLyrics(kgResult);
+    } catch (...) {
+        qCWarning(dmMusic) << "Kugou getLyrics exception";
+        return QString();
+    }
 }

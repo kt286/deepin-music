@@ -678,6 +678,53 @@
         <source>Please put the lyric file (same name as the song) and the song file in the same folder</source>
         <translation>请将同名的LRC文件放到歌曲文件目录下</translation>
     </message>
+    <message>
+        <source>Search Lyrics</source>
+        <translation>搜索歌词</translation>
+    </message>
+</context>
+<context>
+    <name>LyricSearchDialog</name>
+    <message>
+        <source>Search Lyrics</source>
+        <translation>搜索歌词</translation>
+    </message>
+    <message>
+        <source>Enter song name and artist</source>
+        <translation>输入歌曲名和歌手</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>搜索</translation>
+    </message>
+    <message>
+        <source>Search Results</source>
+        <translation>搜索结果</translation>
+    </message>
+    <message>
+        <source>Lyrics Preview</source>
+        <translation>歌词预览</translation>
+    </message>
+    <message>
+        <source>Select a result to preview lyrics</source>
+        <translation>选择一个结果预览歌词</translation>
+    </message>
+    <message>
+        <source>Loading...</source>
+        <translation>加载中...</translation>
+    </message>
+    <message>
+        <source>No lyrics found</source>
+        <translation>未找到歌词</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>应用</translation>
+    </message>
 </context>
 <context>
     <name>MainWindow</name>

@@ -67,6 +67,7 @@ Window {
             searching = false
             if (searchResults.length > 0) {
                 resultsList.currentIndex = 0
+                loadPreview(0)
             }
         }
     }
@@ -80,6 +81,8 @@ Window {
             var lyric = ""
             if (result.source === "NetEase") {
                 lyric = Presenter.getLyricsFromNetEase(result.id)
+            } else if (result.source === "Kugou") {
+                lyric = Presenter.getLyricsFromKugou(result.kugouHash, result.id, result.title, result.artist, result.album, result.duration)
             } else if (result.source === "LRCLIB") {
                 lyric = Presenter.getLyricsFromLrclib(result.lrclibTrackName, result.lrclibArtistName, result.lrclibAlbumName, result.duration)
             }
@@ -173,7 +176,7 @@ Window {
                                         width: sourceText.width + 12
                                         height: 18
                                         radius: 9
-                                        color: modelData.source === "NetEase" ? "#1a73e8" : "#e8710a"
+                                        color: modelData.source === "Kugou" ? "#1a73e8" : modelData.source === "NetEase" ? "#e8192c" : "#e8710a"
                                         anchors.verticalCenter: parent.verticalCenter
 
                                         Label {

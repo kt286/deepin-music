@@ -15,6 +15,7 @@
 #include <QTimer>
 #include <QRandomGenerator>
 #include <QDateTime>
+#include <QRegularExpression>
 #include <QDebug>
 
 #include "util/log.h"
@@ -51,6 +52,72 @@ QByteArray KugouApi::krcDecrypt(const QByteArray &encrypted)
         decrypted[i] = data.at(i) ^ KG_KRC_KEY.at(i % KG_KRC_KEY.size());
     // zlib decompress
     return LyricCrypt::zlibDecompress(decrypted);
+}
+
+// 将毫秒转换为标准LRC时间戳格式 mm:ss.xx
+static QString msToLrcTime(qint64 ms)
+{
+    qint64 totalSeconds = ms / 1000;
+    qint64 minutes = totalSeconds / 60;
+    qint64 seconds = totalSeconds % 60;
+    qint64 centiseconds = (ms % 1000) / 10;
+    return QString("%1:%2.%3")
+        .arg(minutes, 2, 10, QChar('0'))
+        .arg(seconds, 2, 10, QChar('0'))
+        .arg(centiseconds, 2, 10, QChar('0'));
+}
+
+// 将酷狗KRC格式转换为标准逐字LRC格式
+// KRC格式: [line_start,line_duration]<word_start,word_duration,density>word_content
+// 标准格式: [mm:ss.xx]word1[mm:ss.xx]word2...
+static QString convertKrcToStandardLrc(const QString &krcText)
+{
+    if (krcText.isEmpty()) return QString();
+
+    QStringList lines = krcText.split('\n');
+    QString result;
+
+    QRegularExpression lineRegex("^\\[(\\d+),(\\d+)\\](.*)$");
+    QRegularExpression wordRegex("<(\\d+),(\\d+),\\d+>([^\\<]*)");
+
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty() || !trimmed.startsWith('[')) continue;
+
+        // 匹配KRC行格式: [line_start,line_duration]content
+        QRegularExpressionMatch lineMatch = lineRegex.match(trimmed);
+        if (!lineMatch.hasMatch()) continue;
+
+        qint64 lineStart = lineMatch.captured(1).toLongLong();
+        QString content = lineMatch.captured(3);
+
+        // 匹配逐字内容: <word_start,word_duration,density>word_text
+        QString lrcLine = "[" + msToLrcTime(lineStart) + "]";
+        bool hasWords = false;
+        QRegularExpressionMatchIterator wordIt = wordRegex.globalMatch(content);
+
+        while (wordIt.hasNext()) {
+            QRegularExpressionMatch wordMatch = wordIt.next();
+            qint64 wordStart = lineStart + wordMatch.captured(1).toLongLong();
+            QString wordText = wordMatch.captured(3);
+
+            if (!wordText.isEmpty()) {
+                lrcLine += "[" + msToLrcTime(wordStart) + "]" + wordText;
+                hasWords = true;
+            }
+        }
+
+        if (hasWords) {
+            if (!result.isEmpty()) result += '\n';
+            result += lrcLine;
+        } else {
+            // 没有逐字信息，使用普通LRC格式
+            if (!result.isEmpty()) result += '\n';
+            result += "[" + msToLrcTime(lineStart) + "]" + content;
+        }
+    }
+
+    return result;
 }
 
 QByteArray KugouApi::computeSignature(const QVariantMap &params, const QByteArray &postData)
@@ -236,11 +303,14 @@ QString KugouApi::getLyrics(const KgsearchResult &song)
     QByteArray content = QByteArray::fromBase64(contentB64);
 
     if (contentType == 2) {
-        // Plain text
+        // Plain text - already standard LRC
         return QString::fromUtf8(content);
     } else {
-        // Encrypted KRC
-        return QString::fromUtf8(krcDecrypt(content));
+        // Encrypted KRC - decrypt and convert to standard LRC
+        QString krcText = QString::fromUtf8(krcDecrypt(content));
+        QString standardLrc = convertKrcToStandardLrc(krcText);
+        qCInfo(dmMusic) << "Converted KRC to standard LRC, size:" << standardLrc.size();
+        return standardLrc;
     }
 }
 

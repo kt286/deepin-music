@@ -488,6 +488,19 @@ QString Presenter::getLyricsFromLrclib(const QString &trackName, const QString &
     return downloader.getLyricsFromLrclib(result);
 }
 
+QString Presenter::getLyricsFromKugou(const QString &hash, qint64 id, const QString &title, const QString &artist, const QString &album, qint64 duration)
+{
+    LyricDownloader downloader;
+    LyricSearchResult result;
+    result.kugouHash = hash;
+    result.id = id;
+    result.title = title;
+    result.artist = artist;
+    result.album = album;
+    result.duration = duration;
+    return downloader.getLyricsFromKugou(result);
+}
+
 void Presenter::setActivateMeta(const QString &metaHash)
 {
     qCDebug(dmMusic) << "Setting active media meta:" << metaHash;

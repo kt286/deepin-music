@@ -107,6 +107,7 @@ public:
     Q_INVOKABLE QString getCurrentLyricPath();
     Q_INVOKABLE QString getLyricsFromNetEase(qint64 songId);
     Q_INVOKABLE QString getLyricsFromLrclib(const QString &trackName, const QString &artistName, const QString &albumName, qint64 duration);
+    Q_INVOKABLE QString getLyricsFromKugou(const QString &hash, qint64 id, const QString &title, const QString &artist, const QString &album, qint64 duration);
 
     // 歌曲解析
     Q_INVOKABLE QStringList detectEncodings(const QString &metaHash);
