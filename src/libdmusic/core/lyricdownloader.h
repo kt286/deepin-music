@@ -19,13 +19,15 @@ struct LyricSearchResult {
     QString title;
     QString artist;
     QString album;
-    QString source;    // "NetEase" or "LRCLIB"
+    QString source;    // "NetEase", "Kugou" or "LRCLIB"
     qint64 id = 0;     // NetEase song ID
     qint64 duration = 0;
     // LRCLIB fields
     QString lrclibTrackName;
     QString lrclibArtistName;
     QString lrclibAlbumName;
+    // Kugou fields
+    QString kugouHash;
 };
 
 class LyricDownloader : public QObject
@@ -48,6 +50,8 @@ public:
     QString getLyricsFromNetEase(qint64 songId);
     // Get lyrics from LRCLIB by search result
     QString getLyricsFromLrclib(const LyricSearchResult &result);
+    // Get lyrics from Kugou by search result
+    QString getLyricsFromKugou(const LyricSearchResult &result);
 
 private:
     // Try each source in order

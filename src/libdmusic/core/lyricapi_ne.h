@@ -8,7 +8,6 @@
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QString>
-#include <QMap>
 
 #include "global.h"
 
@@ -32,25 +31,11 @@ public:
     QString searchAndGetLyrics(const DMusic::MediaMeta &meta);
 
 private:
-    void ensureLogin();
     QByteArray eapiEncrypt(const QByteArray &path, const QVariantMap &params);
     QByteArray eapiDecrypt(const QByteArray &data);
     QByteArray makeRequest(const QByteArray &path, const QVariantMap &params);
-    QByteArray buildCookieBytes() const;
 
     QNetworkAccessManager *m_netManager = nullptr;
-    bool m_loggedIn = false;
-
-    // Session state
-    QString m_deviceId;
-    QString m_clientSign;
-    QString m_osver;
-    QString m_mode;
-    QString m_userId;
-    // Response cookies from server
-    QString m_nmtid;
-    QString m_musicA;
-    QString m_csrf;
 };
 
 #endif // LYRICAPI_NE_H
