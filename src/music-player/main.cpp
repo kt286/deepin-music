@@ -13,6 +13,7 @@
 #include <QFileInfo>
 #include <QQuickWindow>
 #include <QTimer>
+#include <QLoggingCategory>
 
 #include <memory>
 
@@ -150,8 +151,17 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription("Deepin music player.");
     parser.addHelpOption();
     parser.addVersionOption();
+    parser.addOption({{"d", "debug"}, "Enable debug log output"});
     parser.addPositionalArgument("file", "Music file path");
     parser.process(*app);
+
+    // 默认屏蔽 debug 级别日志，--debug 时启用
+    if (!parser.isSet("debug")) {
+        QLoggingCategory::setFilterRules(QStringLiteral("deepin.music.debug=false\n"
+                                                        "deepin.music.warning=true\n"
+                                                        "deepin.music.critical=true\n"
+                                                        "deepin.music.fatal=true"));
+    }
 
     // handle open file
     QStringList OpenFilePaths = parser.positionalArguments();

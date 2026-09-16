@@ -99,6 +99,14 @@ public:
 
     // 歌词解析
     Q_INVOKABLE QVariantList getLyrics();
+    Q_INVOKABLE void downloadLyric();
+
+    // 歌词搜索
+    Q_INVOKABLE QVariantList searchLyrics(const QString &keyword);
+    Q_INVOKABLE bool applyLyric(const QString &lyricText);
+    Q_INVOKABLE QString getCurrentLyricPath();
+    Q_INVOKABLE QString getLyricsFromNetEase(qint64 songId);
+    Q_INVOKABLE QString getLyricsFromLrclib(const QString &trackName, const QString &artistName, const QString &albumName, qint64 duration);
 
     // 歌曲解析
     Q_INVOKABLE QStringList detectEncodings(const QString &metaHash);
@@ -130,6 +138,7 @@ signals:
     void restorePlaybackStatus();
     void currentPlaylistSChanged(QString playlistHash);
     void metaChanged();
+    void lyricsChanged(QString trackHash);
     void positionChanged(qint64 position, qint64 length);
     void playbackStatusChanged(DmGlobal::PlaybackStatus status);
     void muteChanged(bool mute);
