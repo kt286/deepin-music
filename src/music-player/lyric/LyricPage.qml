@@ -10,6 +10,8 @@ import Qt5Compat.GraphicalEffects
 
 import org.deepin.dtk 1.0
 
+import "../dialogs"
+
 Rectangle{
     id: lrcRectItem
 
@@ -220,7 +222,34 @@ Rectangle{
                 font: DTK.fontManager.t5
             }
         }
+        }
     }
+
+    // Lyric search button
+    Button {
+        id: lyricSearchBtn
+        visible: titleStr.length > 0
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 20
+        anchors.topMargin: 100
+        width: 100
+        height: 36
+        text: qsTr("Search Lyrics")
+        onClicked: {
+            var dialog = lyricSearchDialogComponent.createObject(lrcRectItem, {
+                "searchKeyword": artist.length > 0 ? titleStr + " " + artist : titleStr
+            })
+            dialog.lyricApplied.connect(function() {
+                metaChange()
+            })
+            dialog.visible = true
+        }
+    }
+
+    Component {
+        id: lyricSearchDialogComponent
+        LyricSearchDialog {}
     }
 
     function metaChange(){
@@ -258,6 +287,29 @@ Rectangle{
         switchShader();
     }
 
+    function onLyricsChanged(trackHash) {
+        var meta = Presenter.getActivateMeta()
+        if (meta["hash"] !== trackHash) {
+            return
+        }
+        lrcModel.clear()
+        wordLyricsData = []
+
+        var lyricList = Presenter.getLyrics();
+        var tempWordData = [];
+        for (var i = 0; i < lyricList.length; i++) {
+            var item = lyricList[i];
+            var words = item["words"] || [];
+            tempWordData.push(words);
+            lrcModel.append({
+                "time": item["time"],
+                "lyric": item["lyric"],
+                "hasWordTiming": item["hasWordTiming"]
+            });
+        }
+        wordLyricsData = tempWordData;
+    }
+
     function positionChange(position, length) {
         // currentPosition 用于逐字高亮，必须使用原始播放位置；
         // +500ms 偏移仅用于提前滚动当前行到视野中央
@@ -288,6 +340,7 @@ Rectangle{
 
     Component.onCompleted: {
         Presenter.metaChanged.connect(metaChange)
+        Presenter.lyricsChanged.connect(onLyricsChanged)
         Presenter.positionChanged.connect(positionChange)
         shaderView.sigShaderStatusChange.connect(isShowShader)
         metaChange()

@@ -14,9 +14,11 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QProcess>
+#include <QThread>
 
 #include "playerengine.h"
 #include "lyricanalysis.h"
+#include "lyricdownloader.h"
 #include "ckmeans.h"
 #include "datamanager.h"
 #include "utils.h"
@@ -83,6 +85,8 @@ private:
     DataManager                *m_dataManager      = nullptr;
     AudioAnalysis              *m_audioAnalysis    = nullptr;
     LyricAnalysis               m_lyricAnalysis;
+    LyricDownloader             m_lyricDownloader;
+    bool                         m_lyricDownloading = false;
 };
 
 Presenter::Presenter(const QString &unknownAlbumStr, const QString &unknownArtistStr,
@@ -322,21 +326,23 @@ void Presenter::forceExit()
 
 QVariantList Presenter::getLyrics()
 {
-    qCDebug(dmMusic) << "Getting lyrics";
+    qCInfo(dmMusic) << "getLyrics called";
     QVariantList lyrics;
     DMusic::MediaMeta meta = m_data->m_playerEngine->getMediaMeta();
     if (!meta.localPath.isEmpty()) {
-        qCDebug(dmMusic) << "Local path of media:" << meta.localPath;
         QFileInfo fileInfo(meta.localPath);
-        QString lrcPath = fileInfo.dir().path() + QDir::separator() + fileInfo.completeBaseName() + ".lrc";
-        // 同目录下歌词文件不存在，读取缓存中解析的歌词
+        QString lrcPath = fileInfo.dir().path() + "/" + fileInfo.completeBaseName() + ".lrc";
         QFile file(lrcPath);
         if (!file.exists()) {
-            qCDebug(dmMusic) << "Lyrics file does not exist, searching in cache";
-            lrcPath = DmGlobal::cachePath() + QDir::separator() + "lyrics" + QDir::separator() + meta.hash + ".lrc";
+            lrcPath = DmGlobal::cachePath() + "/lyrics/" + meta.hash + ".lrc";
         }
         m_data->m_lyricAnalysis.setFromFile(lrcPath);
         QVector<QPair<qint64, QString> > allLyrics = m_data->m_lyricAnalysis.allLyrics();
+        qCInfo(dmMusic) << "Local lyrics count:" << allLyrics.size() << "path:" << lrcPath;
+        if (allLyrics.isEmpty() && !meta.localPath.isEmpty()) {
+            qCInfo(dmMusic) << "No lyrics found locally, triggering async download";
+            downloadLyric();
+        }
         for (int i = 0; i < allLyrics.size(); i++) {
             QVariantMap curData;
             curData.insert("time", allLyrics[i].first);
@@ -362,6 +368,124 @@ QVariantList Presenter::getLyrics()
     }
     qCDebug(dmMusic) << "Returning lyrics:" << lyrics.size();
     return lyrics;
+}
+
+void Presenter::downloadLyric()
+{
+    if (m_data->m_lyricDownloading) {
+        qCInfo(dmMusic) << "Lyric download already in progress, skipping";
+        return;
+    }
+
+    qCInfo(dmMusic) << "downloadLyric called";
+    DMusic::MediaMeta meta = m_data->m_playerEngine->getMediaMeta();
+    if (meta.localPath.isEmpty()) {
+        qCWarning(dmMusic) << "Cannot download lyric: media localPath is empty";
+        return;
+    }
+
+    QFileInfo fileInfo(meta.localPath);
+    QString savePath = fileInfo.dir().path() + "/"
+                     + fileInfo.completeBaseName() + ".lrc";
+
+    m_data->m_lyricDownloading = true;
+    QString trackHash = meta.hash;
+
+    QThread *thread = new QThread();
+    LyricDownloader *downloader = new LyricDownloader();
+    downloader->moveToThread(thread);
+
+    QObject::connect(thread, &QThread::finished, this, [this]() {
+        m_data->m_lyricDownloading = false;
+    });
+    QObject::connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+
+    QObject::connect(thread, &QThread::started, downloader,
+        [downloader, meta, savePath, trackHash]() {
+            QString savedPath;
+            QString lyricsText = downloader->downloadAndSaveLyrics(meta, savePath, &savedPath);
+            if (!lyricsText.isEmpty()) {
+                qCInfo(dmMusic) << "Lyric download succeeded, saved to:" << savedPath;
+                QMetaObject::invokeMethod(qApp, [trackHash]() {
+                    auto presenters = qApp->findChildren<Presenter *>();
+                    if (!presenters.isEmpty()) {
+                        emit presenters.first()->lyricsChanged(trackHash);
+                    }
+                }, Qt::QueuedConnection);
+            } else {
+                qCWarning(dmMusic) << "Lyric download failed";
+            }
+            QThread::currentThread()->quit();
+        });
+
+    thread->start();
+}
+
+QString Presenter::getCurrentLyricPath()
+{
+    DMusic::MediaMeta meta = m_data->m_playerEngine->getMediaMeta();
+    if (meta.localPath.isEmpty()) return QString();
+    QFileInfo fileInfo(meta.localPath);
+    return fileInfo.dir().path() + "/" + fileInfo.completeBaseName() + ".lrc";
+}
+
+QVariantList Presenter::searchLyrics(const QString &keyword)
+{
+    QVariantList results;
+    if (keyword.isEmpty()) return results;
+
+    LyricDownloader downloader;
+    QList<LyricSearchResult> searchResults = downloader.searchLyrics(keyword);
+
+    for (const auto &r : searchResults) {
+        QVariantMap item;
+        item["title"] = r.title;
+        item["artist"] = r.artist;
+        item["album"] = r.album;
+        item["source"] = r.source;
+        item["id"] = r.id;
+        item["duration"] = r.duration;
+        results.append(item);
+    }
+    return results;
+}
+
+bool Presenter::applyLyric(const QString &lyricText)
+{
+    if (lyricText.isEmpty()) return false;
+
+    QString lrcPath = getCurrentLyricPath();
+    if (lrcPath.isEmpty()) return false;
+
+    QFile file(lrcPath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+    QTextStream stream(&file);
+    stream << lyricText;
+    file.close();
+
+    qCInfo(dmMusic) << "Applied lyrics to:" << lrcPath;
+
+    // Notify UI to reload
+    DMusic::MediaMeta meta = m_data->m_playerEngine->getMediaMeta();
+    emit lyricsChanged(meta.hash);
+    return true;
+}
+
+QString Presenter::getLyricsFromNetEase(qint64 songId)
+{
+    LyricDownloader downloader;
+    return downloader.getLyricsFromNetEase(songId);
+}
+
+QString Presenter::getLyricsFromLrclib(const QString &trackName, const QString &artistName, const QString &albumName, qint64 duration)
+{
+    LyricDownloader downloader;
+    LyricSearchResult result;
+    result.lrclibTrackName = trackName;
+    result.lrclibArtistName = artistName;
+    result.lrclibAlbumName = albumName;
+    result.duration = duration;
+    return downloader.getLyricsFromLrclib(result);
 }
 
 void Presenter::setActivateMeta(const QString &metaHash)

@@ -3,7 +3,7 @@ project(libdmusic)
 set(CMD_NAME dmusic)
 add_definitions(-DLIBDMUSIC_LIBRARY -DVLCQT_CORE_LIBRARY)
 
-set(QT_MODULES Core Multimedia DBus Sql Core5Compat)
+set(QT_MODULES Core Multimedia DBus Sql Core5Compat Network)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -49,6 +49,8 @@ find_package(PkgConfig REQUIRED)
 
 find_package(Qt6 REQUIRED COMPONENTS ${QT_MODULES})
 find_package(ICU COMPONENTS i18n)
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB REQUIRED)
 
 qt_add_resources(QRC_FILES ${QRC_SOURCE_FILES})
 
@@ -73,7 +75,8 @@ target_link_libraries(${CMD_NAME} ${TARGET_LIBS} PkgConfig::TAGLIB PkgConfig::DT
 if(LINUX)
   target_link_libraries(${CMD_NAME} PkgConfig::MPRIS)
 endif()
-target_link_libraries(${CMD_NAME} Qt6::Core Qt6::Multimedia Qt6::DBus Qt6::Sql Qt6::Core5Compat)
+target_link_libraries(${CMD_NAME} Qt6::Core Qt6::Multimedia Qt6::DBus Qt6::Sql Qt6::Core5Compat Qt6::Network)
+target_link_libraries(${CMD_NAME} OpenSSL::Crypto ZLIB::ZLIB)
 
 # qt5_use_modules(${CMD_NAME} )
 
