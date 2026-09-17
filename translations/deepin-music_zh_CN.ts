@@ -725,6 +725,10 @@
         <source>Apply</source>
         <translation>应用</translation>
     </message>
+    <message>
+        <source>Simplify word-by-word lyrics</source>
+        <translation>精简逐字歌词</translation>
+    </message>
 </context>
 <context>
     <name>MainWindow</name>
