@@ -454,9 +454,9 @@ Rectangle {
         width: 40
         height: 40
         visible: musicListView.locateBtnVisible
-        icon.name: "album"
-        icon.width: 20
-        icon.height: 20
+        icon.name: "location"
+        icon.width: 24
+        icon.height: 24
         ToolTip {
             visible: locatePlayingBtn.hovered
             text: qsTr("Locate current song")
