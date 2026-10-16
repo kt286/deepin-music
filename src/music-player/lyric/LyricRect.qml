@@ -13,6 +13,7 @@ Rectangle {
     property int highlightItemHeight: 60
     property real currentPosition: 0
     property var wordLyricsData: []
+    property bool updatingContentY: false
 
     id: lyricRect
     width: parent.width
@@ -39,6 +40,9 @@ Rectangle {
         delegate: lyricDelegate
 
         onFlickStarted: {
+            if (flickTimer.running) {
+                flickTimer.stop()
+            }
             isFlicking = true
         }
         onFlickEnded: {
@@ -49,6 +53,9 @@ Rectangle {
             flickTimer.start()
         }
         onMovementStarted: {
+            if (flickTimer.running) {
+                flickTimer.stop()
+            }
             isFlicking = true
         }
         onMovementEnded: {
@@ -58,21 +65,45 @@ Rectangle {
             flickTimer.start()
         }
 
-        function updateContentY() {
-            if (isFlicking)
-                return
+        onOriginYChanged: {
+            if (!updatingContentY && !isFlicking && lrcModel.count > 0) {
+                listViewLyric.updateContentY()
+            }
+        }
 
+        function updateContentY() {
+            if (updatingContentY) {
+                return
+            }
+            if (isFlicking) {
+                return
+            }
+            if (lrcModel.count <= 0) {
+                return
+            }
+
+            var offset
+            updatingContentY = true
             if(currentIndex * itemHeight <= lyricRect.height / 2) {
-                //console.log("originY:" + originY + "     currentIndex:" + currentIndex + "      " )
-                listViewLyric.contentY =  0 + originY;
+                offset = 0
             } else {
                 if(currentIndex <= lrcModel.count - Math.round(lyricRect.height / 2 / itemHeight)) {
-                    //console.log("originY:" + originY + "     contentY:" + contentY)
-                    listViewLyric.contentY = (currentIndex - Math.round((lyricRect.height - /*highlightItemHeight*/ itemHeight) / itemHeight / 2)) * itemHeight + originY
+                    offset = (currentIndex - Math.round((lyricRect.height - /*highlightItemHeight*/ itemHeight) / itemHeight / 2)) * itemHeight
                 } else {
-                    listViewLyric.contentY = (lrcModel.count - Math.round(lyricRect.height / itemHeight)) * itemHeight;
+                    offset = (lrcModel.count - Math.round(lyricRect.height / itemHeight)) * itemHeight
                 }
             }
+
+            var maxOffset = Math.max(0, contentHeight - lyricRect.height)
+            if (offset < 0) {
+                offset = 0
+            } else if (offset > maxOffset) {
+                offset = maxOffset
+            }
+
+            var targetY = originY + offset
+            listViewLyric.contentY = targetY;
+            updatingContentY = false
         }
         Behavior on contentY {
             NumberAnimation {

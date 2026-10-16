@@ -22,6 +22,7 @@ Rectangle{
     property bool withLrcs: lrcModel.count == 0 ? false : true
     property int centerAreaWidth: 899
     property real currentPosition: 0
+    property real currentLength: 0
 //    property int curIndex: 0
     property ListModel lrcModel: ListModel{}
     property var wordLyricsData: []
@@ -283,6 +284,8 @@ Rectangle{
         }
         wordLyricsData = tempWordData;
 
+        positionChange(lrcRectItem.currentPosition, currentLength)
+
         //切换shader
         switchShader();
     }
@@ -308,13 +311,19 @@ Rectangle{
             });
         }
         wordLyricsData = tempWordData;
+
+        positionChange(lrcRectItem.currentPosition, currentLength)
     }
 
     function positionChange(position, length) {
         // currentPosition 用于逐字高亮，必须使用原始播放位置；
         // +500ms 偏移仅用于提前滚动当前行到视野中央
         currentPosition = position
-        var searchPosition = position + 500
+        currentLength = length
+        if (lrcModel.count === 0) {
+            return
+        }
+        var searchPosition = Math.max(0, position) + 500
         //二分法查找位置
         var lt,rt
         lt = 0
